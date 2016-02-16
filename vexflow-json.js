@@ -7,8 +7,10 @@
   Vex.Flow.JSON = function(data) {
     this.data = data;
     this.stave_offset = 0;
-    this.stave_delta = 60;
+    this.stave_height = 60;
+    this.stave_delta = 75;
     this.staves = {};
+    this.left_padding = 0;
     this.interpret_data();
   }
 
@@ -86,11 +88,25 @@
     if (!(clef instanceof Array)) clef = [clef];
     if (options == null) options = {};
 
+    if (clef.length >= 2) {
+        this.left_padding += 10;
+    }
     _(clef).each(function(c) {
-      this.staves[c] = new Vex.Flow.Stave(10, this.stave_offset, this.width - 20);
+      this.staves[c] = new Vex.Flow.Stave(10 + this.left_padding, this.stave_offset, this.width - 20);
       this.staves[c].addClef(c).addKeySignature(keySignature).setContext(this.context).draw();
       this.stave_offset += this.stave_delta;
     }, this);
+    if (clef.length >= 2 && this.staves.bass && this.staves.treble) {
+      var brace = new Vex.Flow.StaveConnector(this.staves.treble, this.staves.bass).setType(3);
+      var lineLeft = new Vex.Flow.StaveConnector(this.staves.treble, this.staves.bass).setType(1);
+      brace.setContext(this.context).draw();
+      lineLeft.setContext(this.context).draw();
+      if (options.add_right_double_line) {
+        var lineRight = new Vex.Flow.StaveConnector(this.staves.treble, this.staves.bass).setType(6);
+        lineRight.setContext(this.context).draw();
+      }
+    }
+
   };
 
   Vex.Flow.JSON.prototype.stave_notes = function(notes) {
@@ -152,7 +168,7 @@
       scale: this.scale
     });
     
-    this.draw_stave(this.clef, this.keySignature);
+    this.draw_stave(this.clef, this.keySignature, options);
     
     if (this.voices) {
       this.draw_voices(this.stave_voices(this.voices));

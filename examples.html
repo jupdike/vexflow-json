@@ -12,7 +12,11 @@
   function render_vexflow(element_id, data, render_options) {
     var element = document.getElementById(element_id);
     var json = new Vex.Flow.JSON(data);
-    json.render(element, render_options);
+    if (render_options) {
+        json.render(element, render_options);
+    } else {
+        json.render(element, data);
+    }
   }
 
 </script>
@@ -90,12 +94,13 @@
   </script>
 
   <h2>Chord Across Treble &amp; Bass Clefs</h2>
-  <canvas id="chord-across-clefs" width="600" height="300"></canvas>
+  <canvas id="chord-across-clefs" width="150" height="180"></canvas>
   <script type="text/javascript">
     render_vexflow("chord-across-clefs", {
       clef: ["treble", "bass"],
       duration: "h",
-      keys: ["C/3", "E/3", "G/4", "Bb/4"]
+      keys: ["C/3", "E/3", "G/4", "Bb/4"],
+      add_right_double_line: true,
     });
   </script>
 
