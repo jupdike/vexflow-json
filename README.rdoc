@@ -149,7 +149,7 @@ Here are all optional keys to the second "render options" object:
     clef: "treble"  // or: ["treble", "bass"]
   }
 
-=== Grand Staff
+=== Grand Staff: Chord Across Treble &amp; Bass Clefs
 
 You can specify both treble and bass clef at once. The notes will be split across clefs: bass notes are notes with octave <= 3.
 

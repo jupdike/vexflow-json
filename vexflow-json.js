@@ -19,6 +19,8 @@
     this.stave_offset = 0;
     this.stave_height = 60;
     this.stave_delta = 75;
+    this.stave_length = 50; // can't tell what this does; was in example on VexFlow GitHub forum
+    this.multistaff_padding = 10;
     this.staves = {};
     this.left_padding = 0;
     this.interpret_data();
@@ -103,7 +105,7 @@
     if (options == null) options = {};
 
     if (clef.length >= 2) {
-        this.left_padding += 10;
+        this.left_padding += this.multistaff_padding;
     }
     _(clef).each(function(c) {
       this.staves[c] = new Vex.Flow.Stave(10 + this.left_padding, this.stave_offset, this.width - 20);
@@ -140,8 +142,10 @@
     _(notes).each(function(note) {
       _.each(clefs, function(clef) { note_clef_pairs.push( [note, clef] ); });
     });
+    
+    var max_accs = 0;
 
-    return _(note_clef_pairs).map(function(note_clef_pair) {
+    var ret = _(note_clef_pairs).map(function(note_clef_pair) {
       var note = note_clef_pair[0];
       note.clef = note_clef_pair[1];
       if (note.barnote) { return new Vex.Flow.BarNote(); }
@@ -155,28 +159,82 @@
         return octave <= 3; // bass
       });
       
-      console.log(note.clef);
-      console.log(note.keys);
+      //console.log(note.clef);
+      //console.log(note.keys);
 
       note.duration || (note.duration = "h");
-      //note.clef = "treble"; // here
       stave_note = new Vex.Flow.StaveNote(note);
 
+      var accs = 0;
       _(note.keys).each(function(key, i) {
         var accidental, note_portion;
         note_portion = key.split("/")[0];
         accidental = note_portion.slice(1, (note_portion.length + 1) || 9e9);
 
         if (accidental.length > 0) {
+          accs++;
           stave_note.addAccidental(i, new Vex.Flow.Accidental(accidental));
         }
       });
+      max_accs = Math.max(max_accs, accs);
       return stave_note;
     });
+    
+    // doesn't fix issue with overlapping accidentals :-(
+    //this.multistaff_padding = this.multistaff_padding * (1 + max_accs); // make more horizontal space
+    
+    return ret;
   };
   
   Vex.Flow.JSON.prototype.draw_notes = function(notes) {
-    Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves["treble"], notes);
+    var num_staves = 0;
+    if (this.staves.treble) { num_staves++; }
+    if (this.staves.bass) { num_staves++; }
+
+    var this_staves = this.staves; // JavaScript sucks, but we knew that
+    var this_context = this.context;
+    var pad = this.multistaff_padding;
+
+    var clefs = [];
+    _(notes).each(function (note, i) {
+        clefs.push(note.clef);
+    });
+
+    console.log('staves:', num_staves, this.staves);
+    console.log('clefs:', clefs.length, clefs);
+    
+    if (num_staves < 2 || clefs.length < 2) {
+      Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves["treble"], notes);
+      return;
+    }
+    
+    // we have 2 or more...
+
+    var formatter = new Vex.Flow.Formatter();
+
+    var voices = _(notes).map(function (note) {
+      var voice = new Vex.Flow.Voice(note); //{num_beats:2, beat_value: 4, resolution:Vex.Flow.RESOLUTION});
+      voice.setStrict(false);
+      voice.addTickables([note]);
+      return voice;
+    });
+
+    formatter.format(voices, this.stave_length);
+
+    var max_start_x = -1e99;
+    _(notes).each(function (note, i) {
+      var c = clefs[i];
+      var staff = this_staves[c]; // clefs[0] and voices[0] line up, same with [1], etc.
+      max_start_x = Math.max(max_start_x, staff.getNoteStartX());
+    });
+
+    _(voices).each(function (voice, i) {
+      var c = clefs[i];
+      var staff = this_staves[c];
+      staff.setNoteStartX(max_start_x + pad);
+      voice.draw(this_context, staff);
+    });
+
   };
   
   Vex.Flow.JSON.prototype.stave_voices = function(voices) {
@@ -196,7 +254,7 @@
   Vex.Flow.JSON.prototype.draw_voices = function(voices) {
     var formatter = new Vex.Flow.Formatter().joinVoices(voices).format(voices, this.width - 120);
     _(voices).each(function(voice) {
-      voice.draw(this.context, this.staves["treble"]);
+      voice.draw(this.context, this.staves["treble"]); // here
     }, this);
   };
 
