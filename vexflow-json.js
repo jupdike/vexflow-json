@@ -19,6 +19,7 @@
     this.stave_offset = 0;
     this.stave_height = 60;
     this.stave_delta = 75;
+    // https://github.com/0xfe/vexflow/issues/134
     this.stave_length = 50; // can't tell what this does; was in example on VexFlow GitHub forum
     this.multistaff_padding = 10;
     this.staves = {};
@@ -90,8 +91,9 @@
     this.renderer = new Vex.Flow.Renderer(this.canvas, backend);
     this.context = this.renderer.getContext();
     if (backend === Vex.Flow.Renderer.Backends.SVG) {
-      this.context.width = this.canvas.width.baseVal.value|0;
-      this.context.height = this.canvas.height.baseVal.value|0;
+      // interferes with offline (node.js / jsdom) SVG "rendering"
+      //this.context.width = this.canvas.width.baseVal.value|0;
+      //this.context.height = this.canvas.height.baseVal.value|0;
     }
     
     if (canvas_options.scale) {
@@ -200,8 +202,8 @@
         clefs.push(note.clef);
     });
 
-    console.log('staves:', num_staves, this.staves);
-    console.log('clefs:', clefs.length, clefs);
+    //console.log('staves:', num_staves, this.staves);
+    //console.log('clefs:', clefs.length, clefs);
     
     if (num_staves < 2 || clefs.length < 2) {
       Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves["treble"], notes);
