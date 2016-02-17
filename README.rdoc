@@ -149,4 +149,14 @@ Here are all optional keys to the second "render options" object:
     clef: "treble"  // or: ["treble", "bass"]
   }
 
-NOTE: Even though you can specify both treble and bass clef at once, for now all notes are rendered "within" treble clef and stemmed as such.
+=== Grand Staff
+
+You can specify both treble and bass clef at once. The notes will be split across clefs: bass notes are notes with octave <= 3.
+
+  {
+    clef: ["treble", "bass"],
+    duration: "h",
+    keys: ["C/3", "E/3", "G/4", "Bb/4"],
+    add_right_double_line: true,
+  }
+

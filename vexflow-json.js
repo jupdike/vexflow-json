@@ -4,6 +4,16 @@
     throw "Please be sure vexflow is required before requiring vexflow.json."
   }
 
+  function cloner(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function concat(xs) {
+    var ret = [];
+    _.each(xs, function (x) { return _.each(x, function(x) { ret.push(x); }); });
+    return ret;
+  }
+
   Vex.Flow.JSON = function(data) {
     this.data = data;
     this.stave_offset = 0;
@@ -77,6 +87,10 @@
     }
     this.renderer = new Vex.Flow.Renderer(this.canvas, backend);
     this.context = this.renderer.getContext();
+    if (backend === Vex.Flow.Renderer.Backends.SVG) {
+      this.context.width = this.canvas.width.baseVal.value|0;
+      this.context.height = this.canvas.height.baseVal.value|0;
+    }
     
     if (canvas_options.scale) {
       this.context.scale(canvas_options.scale, canvas_options.scale);
@@ -110,12 +124,42 @@
   };
 
   Vex.Flow.JSON.prototype.stave_notes = function(notes) {
-    return _(notes).map(function(note) {
+    var clefs = _(notes).map(function(note) {
+      if (note.clef) {
+        return note.clef;
+      } else {
+        return "treble";
+      }
+    });
+    if (clefs instanceof Array && clefs.length >= 1 && clefs[0] && clefs[0] instanceof Array && clefs[0].length >= 1) {
+      clefs = concat(clefs);
+    }
+    // show be flat list at this point
+    clefs = _.uniq(clefs); // only need one of each clef!
+    var note_clef_pairs = [];
+    _(notes).each(function(note) {
+      _.each(clefs, function(clef) { note_clef_pairs.push( [note, clef] ); });
+    });
+
+    return _(note_clef_pairs).map(function(note_clef_pair) {
+      var note = note_clef_pair[0];
+      note.clef = note_clef_pair[1];
       if (note.barnote) { return new Vex.Flow.BarNote(); }
       
       var stave_note;
+      note = cloner(note);
+      
+      note.keys = _.filter(note.keys, function (key) {
+        var octave = key.split("/")[1];
+        if (note.clef == 'treble') return octave > 3;
+        return octave <= 3; // bass
+      });
+      
+      console.log(note.clef);
+      console.log(note.keys);
+
       note.duration || (note.duration = "h");
-      note.clef = "treble"; // Forcing to treble for now, even though bass may be present (we just line it up properly)
+      //note.clef = "treble"; // here
       stave_note = new Vex.Flow.StaveNote(note);
 
       _(note.keys).each(function(key, i) {
