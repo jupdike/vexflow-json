@@ -18,8 +18,7 @@
     this.data = data;
     this.stave_offset = 0;
     this.stave_height = 60;
-    this.stave_delta = 75;
-    // https://github.com/0xfe/vexflow/issues/134
+    this.stave_delta = 95;
     this.multistaff_padding = 10;
     this.staves = {};
     this.left_padding = 0;
@@ -158,9 +157,6 @@
         return octave <= 3; // bass
       });
       
-      //console.log(note.clef);
-      //console.log(note.keys);
-
       note.duration || (note.duration = "h");
       stave_note = new Vex.Flow.StaveNote(note);
 
@@ -205,9 +201,6 @@
         clefs.push(note.clef);
     });
 
-    //console.log('staves:', num_staves, this.staves);
-    //console.log('clefs:', clefs.length, clefs);
-    
     if (num_staves < 2 || clefs.length < 2) {
       Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[one_staff_name], notes);
       return;
@@ -224,8 +217,6 @@
       return voice;
     });
 
-    //formatter.format(voices, this.stave_length);
-    
     _(voices).each(function (voice) {
       formatter.joinVoices([voice]);
     });
@@ -235,7 +226,7 @@
     var max_start_x = -1e99;
     _(notes).each(function (note, i) {
       var c = clefs[i];
-      var staff = this_staves[c]; // clefs[0] and voices[0] line up, same with [1], etc.
+      var staff = this_staves[c]; // clefs[0] and voices[0] go together, same with [1], etc.
       max_start_x = Math.max(max_start_x, staff.getNoteStartX());
     });
 
