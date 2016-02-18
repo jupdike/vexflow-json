@@ -20,7 +20,6 @@
     this.stave_height = 60;
     this.stave_delta = 75;
     // https://github.com/0xfe/vexflow/issues/134
-    this.stave_length = 50; // can't tell what this does; was in example on VexFlow GitHub forum
     this.multistaff_padding = 10;
     this.staves = {};
     this.left_padding = 0;
@@ -145,8 +144,6 @@
       _.each(clefs, function(clef) { note_clef_pairs.push( [note, clef] ); });
     });
     
-    var max_accs = 0;
-
     var ret = _(note_clef_pairs).map(function(note_clef_pair) {
       var note = note_clef_pair[0];
       note.clef = note_clef_pair[1];
@@ -167,35 +164,41 @@
       note.duration || (note.duration = "h");
       stave_note = new Vex.Flow.StaveNote(note);
 
-      var accs = 0;
       _(note.keys).each(function(key, i) {
         var accidental, note_portion;
         note_portion = key.split("/")[0];
         accidental = note_portion.slice(1, (note_portion.length + 1) || 9e9);
 
         if (accidental.length > 0) {
-          accs++;
           stave_note.addAccidental(i, new Vex.Flow.Accidental(accidental));
         }
       });
-      max_accs = Math.max(max_accs, accs);
       return stave_note;
     });
-    
-    // doesn't fix issue with overlapping accidentals :-(
-    //this.multistaff_padding = this.multistaff_padding * (1 + max_accs); // make more horizontal space
     
     return ret;
   };
   
   Vex.Flow.JSON.prototype.draw_notes = function(notes) {
     var num_staves = 0;
-    if (this.staves.treble) { num_staves++; }
-    if (this.staves.bass) { num_staves++; }
+    var one_staff = null
+    if (this.staves.treble) {
+      num_staves++;
+      if (!one_staff) {
+        one_staff = this.staves.treble;
+        one_staff_name = 'treble';
+      }
+    }
+    if (this.staves.bass) {
+      num_staves++;
+      if (!one_staff) {
+        one_staff = this.staves.bass;
+        one_staff_name = 'bass';
+      }
+    }
 
     var this_staves = this.staves; // JavaScript sucks, but we knew that
     var this_context = this.context;
-    var pad = this.multistaff_padding;
 
     var clefs = [];
     _(notes).each(function (note, i) {
@@ -206,7 +209,7 @@
     //console.log('clefs:', clefs.length, clefs);
     
     if (num_staves < 2 || clefs.length < 2) {
-      Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves["treble"], notes);
+      Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[one_staff_name], notes);
       return;
     }
     
@@ -221,7 +224,13 @@
       return voice;
     });
 
-    formatter.format(voices, this.stave_length);
+    //formatter.format(voices, this.stave_length);
+    
+    _(voices).each(function (voice) {
+      formatter.joinVoices([voice]);
+    });
+    
+    formatter.formatToStave(voices, one_staff);
 
     var max_start_x = -1e99;
     _(notes).each(function (note, i) {
@@ -233,7 +242,7 @@
     _(voices).each(function (voice, i) {
       var c = clefs[i];
       var staff = this_staves[c];
-      staff.setNoteStartX(max_start_x + pad);
+      staff.setNoteStartX(max_start_x);
       voice.draw(this_context, staff);
     });
 
