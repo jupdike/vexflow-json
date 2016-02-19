@@ -104,10 +104,10 @@
     if (!(clef instanceof Array)) clef = [clef];
     if (options == null) options = {};
 
-    if (clef.length >= 2) {
+    if (this.actual_clefs.length >= 2) {
         this.left_padding += this.multistaff_padding;
     }
-    _(clef).each(function(c) {
+    _(this.actual_clefs).each(function(c) {
       this.staves[c] = new Vex.Flow.Stave(10 + this.left_padding, this.stave_offset, this.width - 20);
       this.staves[c].addClef(c).addKeySignature(keySignature).setContext(this.context).draw();
       this.stave_offset += this.stave_delta;
@@ -122,7 +122,6 @@
         lineRight.setContext(this.context).draw();
       }
     }
-
   };
 
   Vex.Flow.JSON.prototype.stave_notes = function(notes) {
@@ -142,7 +141,9 @@
     _(notes).each(function(note) {
       _.each(clefs, function(clef) { note_clef_pairs.push( [note, clef] ); });
     });
-    
+
+    var actual_clefs = [];
+
     var ret = _(note_clef_pairs).map(function(note_clef_pair) {
       var note = note_clef_pair[0];
       note.clef = note_clef_pair[1];
@@ -152,9 +153,23 @@
       note = cloner(note);
       
       note.keys = _.filter(note.keys, function (key) {
+        if (key.indexOf("_") > -1) {
+          return note.clef === 'bass';
+        }
+        if (key.indexOf("-") > -1) {
+          return note.clef === 'treble';
+        }
         var octave = key.split("/")[1];
         if (note.clef == 'treble') return octave > 3;
         return octave <= 3; // bass
+      });
+      
+      if (note.keys.length > 0) {
+        actual_clefs.push(note.clef);
+      }
+
+      note.keys = _.map(note.keys, function (key) {
+        return key.replace('_', '/').replace('-', '/');
       });
       
       note.duration || (note.duration = "h");
@@ -172,6 +187,8 @@
       return stave_note;
     });
     
+    this.actual_clefs = _.uniq(actual_clefs);
+
     return ret;
   };
   
@@ -180,29 +197,27 @@
     var one_staff = null
     if (this.staves.treble) {
       num_staves++;
-      if (!one_staff) {
+      if (!one_staff && _(this.actual_clefs).some(function(c) { return c == 'treble'; })) {
         one_staff = this.staves.treble;
         one_staff_name = 'treble';
       }
     }
     if (this.staves.bass) {
       num_staves++;
-      if (!one_staff) {
+      if (!one_staff && _(this.actual_clefs).some(function(c) { return c == 'bass' })) {
         one_staff = this.staves.bass;
         one_staff_name = 'bass';
       }
     }
-
+    
     var this_staves = this.staves; // JavaScript sucks, but we knew that
     var this_context = this.context;
+    var this_actual_clefs = this.actual_clefs;
 
-    var clefs = [];
-    _(notes).each(function (note, i) {
-        clefs.push(note.clef);
-    });
-
-    if (num_staves < 2 || clefs.length < 2) {
-      Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[one_staff_name], notes);
+    if (num_staves < 2 || this.actual_clefs.length < 2) {
+      var filtered = _(notes).filter(function (note) { return note.clef === one_staff_name; });
+      Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[one_staff_name],
+        filtered );
       return;
     }
     
@@ -225,13 +240,13 @@
 
     var max_start_x = -1e99;
     _(notes).each(function (note, i) {
-      var c = clefs[i];
+      var c = this_actual_clefs[i];
       var staff = this_staves[c]; // clefs[0] and voices[0] go together, same with [1], etc.
       max_start_x = Math.max(max_start_x, staff.getNoteStartX());
     });
 
     _(voices).each(function (voice, i) {
-      var c = clefs[i];
+      var c = this_actual_clefs[i];
       var staff = this_staves[c];
       staff.setNoteStartX(max_start_x);
       voice.draw(this_context, staff);
@@ -271,13 +286,21 @@
     this.draw_canvas(element, {
       scale: this.scale
     });
+
+    var snotes, svoices;
+    if (this.voices) {
+      svoices = this.stave_voices(this.voices);
+    } else {
+      snotes = this.stave_notes(this.notes);
+    }
     
-    this.draw_stave(this.clef, this.keySignature, options);
+    // now we know if there are empty staves
+    this.draw_stave(this.actual_clefs, this.keySignature, options);
     
     if (this.voices) {
-      this.draw_voices(this.stave_voices(this.voices));
+      this.draw_voices(svoices);
     } else {
-      this.draw_notes(this.stave_notes(this.notes));
+      this.draw_notes(snotes);
     }
   };
 
