@@ -98,18 +98,18 @@
   <script type="text/javascript">
     render_vexflow("chord-across-clefs", {
       clef: ["treble", "bass"],
-      duration: "h",
+      duration: "w",
       keys: ["C/3", "E/3", "G/3", "Bb/3", "C/5"],
       add_right_double_line: true,
     });
   </script>
 
-  <h2>Bass: the notes know they are treble: C_4 (underscore)</h2>
+  <h2>Bass: the notes know they are bass: C_4 (underscore)</h2>
   <canvas id="just-bass" width="150" height="200"></canvas>
   <script type="text/javascript">
     render_vexflow("just-bass", {
       clef: ["treble", "bass"],
-      duration: "h",
+      duration: "w",
       keys: ["E_3", "G_3", "Bb_3", "C_4"],
       add_right_double_line: true,
     });
@@ -120,8 +120,19 @@
   <script type="text/javascript">
     render_vexflow("just-treble", {
       clef: ["treble", "bass"],
-      duration: "h",
+      duration: "w",
       keys: ["E-3", "G-3", "Bb-3", "E-4", "C-5"],
+      add_right_double_line: true,
+    });
+  </script>
+
+  <h2>Combined: the notes know which hand (_ and -)</h2>
+  <canvas id="bass-treble-explicit" width="150" height="200"></canvas>
+  <script type="text/javascript">
+    render_vexflow("bass-treble-explicit", {
+      clef: ["treble", "bass"],
+      duration: "w",
+      keys: ["C_2", "G_2", "Bb_2", "E_3", "Bb-3", "E-4", "G-4"],
       add_right_double_line: true,
     });
   </script>
