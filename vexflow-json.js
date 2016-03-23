@@ -83,7 +83,9 @@
     
     this.canvas = canvas;
     var backend = Vex.Flow.Renderer.Backends.CANVAS;
-    if (canvas.tagName.toLowerCase() === "svg") {
+    if (canvas_options.isFake) {
+      backend = Vex.Flow.Renderer.Backends.SVG;
+    } else if (canvas.tagName.toLowerCase() === "svg") {
       backend = Vex.Flow.Renderer.Backends.SVG;
     }
     this.renderer = new Vex.Flow.Renderer(this.canvas, backend);
@@ -284,7 +286,8 @@
     this.keySignature = options.keySignature || 'C';
 
     this.draw_canvas(element, {
-      scale: this.scale
+      scale: this.scale,
+      isFake: options.isFake
     });
 
     var snotes, svoices;
