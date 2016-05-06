@@ -175,6 +175,7 @@
       });
       
       note.duration || (note.duration = "h");
+      note.auto_stem = true;
       stave_note = new Vex.Flow.StaveNote(note);
 
       _(note.keys).each(function(key, i) {
@@ -197,6 +198,7 @@
   Vex.Flow.JSON.prototype.draw_notes = function(notes) {
     var num_staves = 0;
     var one_staff = null
+    var one_staff_name = 'treble';
     if (this.staves.treble) {
       num_staves++;
       if (!one_staff && _(this.actual_clefs).some(function(c) { return c == 'treble'; })) {
