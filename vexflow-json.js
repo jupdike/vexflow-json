@@ -137,7 +137,7 @@
     if (clefs instanceof Array && clefs.length >= 1 && clefs[0] && clefs[0] instanceof Array && clefs[0].length >= 1) {
       clefs = concat(clefs);
     }
-    // show be flat list at this point
+    // should be flat list at this point
     clefs = _.uniq(clefs); // only need one of each clef!
     var note_clef_pairs = [];
     _(notes).each(function(note) {
@@ -166,9 +166,7 @@
         return octave <= 3; // bass
       });
       
-      if (note.keys.length > 0) {
-        actual_clefs.push(note.clef);
-      }
+      actual_clefs.push(note.clef);
 
       note.keys = _.map(note.keys, function (key) {
         return key.replace('_', '/').replace('-', '/');
@@ -176,6 +174,14 @@
       
       note.duration || (note.duration = "h");
       note.auto_stem = true;
+      if (!note.keys || note.keys.length < 1) {
+        // engrave a rest
+        if (note.clef === 'treble') {
+          note = { keys: ["b/4"], duration: note.duration+"r", clef: 'treble', 'add_right_double_line': true, 'auto_stem': true };
+        } else if (note.clef === 'bass') {
+          note = { keys: ["d/3"], duration: note.duration+"r", clef: 'bass', 'add_right_double_line': true, 'auto_stem': true };
+        }
+      }
       stave_note = new Vex.Flow.StaveNote(note);
 
       _(note.keys).each(function(key, i) {
