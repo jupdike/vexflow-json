@@ -177,9 +177,9 @@
       if (!note.keys || note.keys.length < 1) {
         // engrave a rest
         if (note.clef === 'treble') {
-          note = { keys: ["b/4"], duration: note.duration+"r", clef: 'treble', 'add_right_double_line': true, 'auto_stem': true };
+          note = { keys: ["d/5"], duration: note.duration+"r", clef: 'treble', 'add_right_double_line': true, 'auto_stem': true };
         } else if (note.clef === 'bass') {
-          note = { keys: ["d/3"], duration: note.duration+"r", clef: 'bass', 'add_right_double_line': true, 'auto_stem': true };
+          note = { keys: ["f/3"], duration: note.duration+"r", clef: 'bass', 'add_right_double_line': true, 'auto_stem': true };
         }
       }
       stave_note = new Vex.Flow.StaveNote(note);
